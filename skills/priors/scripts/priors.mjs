@@ -75,7 +75,10 @@ function fold(lines) {
       seeRun(l.run);
       const e = st[l.id];
       if (l.action === 'scope-missing') e.miss++;
-      else if (l.action === 'disposition') { e.miss = 0; e.status = l.to; e.lastRun = l.run || e.lastRun; }
+      else if (l.action === 'disposition') { e.miss = 0; e.lastRun = l.run || e.lastRun;
+        // 'still-open' means exactly that — the prior stays open and MUST be
+        // carried into the next run's verify list, not filed away as seen
+        e.status = l.to === 'still-open' ? 'open' : l.to; }
       else if (l.action === 'decide') { e.miss = 0; e.status = l.to === 'reopen' ? 'open' : l.to === 'keep' ? 'accepted' : l.to; e.humanIdx = runsOrder.length - 1; }
       else if (l.action === 'redact') e.status = 'redacted';
     }

@@ -59,6 +59,18 @@ test('replay: fixed acknowledged, carried keep identity, no re-discovery', (t) =
   assert.match(summary, /New this run: 0/);
 });
 
+test('carried means carried: a still-open prior reappears in the NEXT run too', (t) => {
+  const cwd = mkdtempSync(join(tmpdir(), 'priors-'));
+  seed(cwd);
+  const scopes = { 'src/f1.ts#fn': 'hash-v1-1', 'src/f2.ts#fn': 'hash-v1-2', 'src/f3.ts#fn': 'hash-v1-3', 'src/f4.ts#fn': 'hash-v1-4', 'src/f5.ts#fn': 'hash-v1-5' };
+  writeFileSync(join(cwd, 'scopes.json'), JSON.stringify(scopes));
+  const r2 = JSON.parse(keeper(cwd, ['relevant', '--ns', 'review', '--scopes', 'scopes.json']).out);
+  for (const v of r2.verify) keeper(cwd, ['disposition', v.id, 'still-open', '--run', r2.run]);
+  keeper(cwd, ['commit', '--run', r2.run]);
+  const r3 = JSON.parse(keeper(cwd, ['relevant', '--ns', 'review', '--scopes', 'scopes.json']).out);
+  assert.equal(r3.verify.length, 5, 'all five carried priors are exposed again on run 3');
+});
+
 test('ratchet: human wontfix is never re-arguable on unchanged code', (t) => {
   const cwd = mkdtempSync(join(tmpdir(), 'priors-'));
   seed(cwd);

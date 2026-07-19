@@ -1,58 +1,119 @@
 # priors
 
-**Your AI agent forgets everything it settled. This makes it remember.**
+**A private filing cabinet for your AI agent — so it remembers what you two
+already settled.**
 
-## The problem you already have
+It lives on your machine, inside your repo, as plain text. Nobody else
+installs anything, sees it, or needs to know it exists. It changes one
+thing only: **your agent reads it before it speaks, and files what it
+learns after.**
 
-Ask your agent to review your code. It finds 35 issues. You fix 22 of them,
-skip a few on purpose, and run the review again.
+## The mental model (30 seconds)
 
-It reports 25 "new" issues.
+It's a diary where lines are only ever added at the bottom — never edited,
+never erased:
 
-Some are the ones you *chose* to skip, re-argued as if you'd never decided.
-Some are old findings in new words. Some were always there, just below
-yesterday's bar. You can't tell which are which — and nothing you fixed gets
-acknowledged. Every run starts from zero. The goalposts move forever.
+```
+run-1 | agent found:    "pricing button collects no emails"
+run-1 | agent found:    "the $100k figure shows no math"
+run-2 | chetan decided: "skip the $100k one — it's fine"
+run-3 | from jono:      "lead with the problem story"
+```
 
-The same thing happens everywhere an agent makes judgments or learns by
-doing: design reviews re-open settled taste calls, contract reviews re-flag
-clauses your counsel already accepted, and every session re-discovers that
-this repo's tests run with `just test`, the hard way.
+Later lines answer earlier ones (that's how it knows what's current — and
+what came after what: lower = later). Before every run, the agent must
+read it. After every run, a small script checks the agent actually
+honored it — a run that ignores the diary doesn't count.
 
-## What this does
+That's the entire system. Now the weeks it changes:
 
-`priors` gives your agent a small ledger of everything already settled —
-findings it reported, decisions you made, lessons it learned — and **makes
-the next run honor it before saying anything new**:
+---
 
-- **Fixed things get acknowledged.** "22 of 35 fixed ✓" — with the same IDs
-  as last time, so you can see your progress instead of a fresh invoice.
-- **Decisions stay decided.** Skip a finding once and mark it — it is never
-  argued again unless the code it points at actually changes.
-- **The bar doesn't creep.** A run may not dredge up minor nitpicks in
-  unchanged code and present them as news. Deeper only happens when you ask.
-- **Lessons stay learned.** "Use `--json` with that CLI", "this vendor's
-  PDFs need decrypting first" — paid for once, remembered after.
+## Week 1 — the code review that stops moving the goalposts
 
-And this isn't a polite suggestion to the model. A small script checks the
-agent's output and **refuses to record a run** that ignores what was
-settled. The model proposes; the ledger disposes.
+You ask your agent to review your code. **35 findings.** You fix 22, skip
+a few on purpose. You run it again — and today, without priors, you get
+**25 "new" findings**: some are the ones you chose to skip, re-argued;
+some are old ones reworded; nothing you fixed is acknowledged.
 
-The result over time: re-runs get *shorter*, not longer. Eventually a run
-comes back with "everything settled still holds — nothing new," which is a
-sentence a memoryless agent cannot say.
+With the filing cabinet, run 2 opens like this instead:
 
-## Quickstart — any harness
+```
+Checked against 35 priors:
+  ✓ 22 fixed — nice work
+  → 9 carried (same items as last run, unchanged code)
+  ? 4 need your call — keep / dismiss each
+New this run: 3 (all in code your fixes touched)
+```
 
-The core is a plain script; "installing" just means teaching your harness
-the ritual. One clone, one installer, everywhere:
+Answer the 4 questions once and they're answered forever — a dismissed
+finding can only come back if the code it points at actually changes.
+Re-runs get *shorter*. Eventually you get the sentence a memoryless
+agent can never say: **"everything settled still holds — nothing new."**
+
+## Week 2 — your design decisions stop being re-litigated
+
+You're iterating on your landing page. You decided the headline stays
+terse — that was a real decision, made after real debate. A memoryless
+agent will suggest expanding it again next Tuesday, and the Tuesday
+after. With the diary, that suggestion is blocked at the source: if the
+agent ever believes the decision deserves revisiting, it arrives as **one
+question to you** — never as fresh advice you have to bat away again.
+
+## Week 3 — lessons get paid for once
+
+Your agent spends ten minutes discovering that this CLI needs `--json`,
+that this vendor's PDFs need decrypting first, that your tests run with
+`just test`. Today it rediscovers all of that every session. With the
+diary, each lesson is written down once and read back at the start of
+every future run. If a lesson ever stops working (the tool changed), it's
+re-learned — once.
+
+## Week 4 — a collaborator reviews your work. They install nothing.
+
+This is the part people expect to be complicated. It isn't:
+
+**Their computer:** your reviewer — say Jono — looks at your live site and
+gives feedback however he naturally does: a Loom, an email, bullets in
+Slack. That's his whole involvement. *No tool, no repo access, no priors.*
+
+**Your computer:** you tell your agent — *"here's Jono's feedback, file
+it."* The agent reads it against your diary and sorts it into three piles:
+
+```
+Jono's review (12 notes):
+  ✓ 4 agree with what you already settled — his name added next to them
+  ＋ 5 new — added to your list
+  ? 3 clash with decisions you made — one question each, your call
+```
+
+You answer the three questions, apply what you accepted, and reply to
+Jono in plain English: *"took these five, already had these four, and
+here's my thinking on the three where we differ."* He experiences a
+normal conversation — where nothing he said fell on the floor, and his
+feedback still shapes your runs three months later. His name stays on
+his lines in your diary forever.
+
+**The rule that makes sharing simple:** feedback travels between people
+as ordinary messages; each person files what they receive into their own
+diary. Nobody ever loads anyone else's.
+
+## Also works on things you don't own
+
+Auditing a client's site, or a competitor's? You have no repo access —
+but the diary was never theirs to hold; it records *your observations*.
+Keep a folder per target (`audits/acme.com/`), run from there, and
+re-runs report drift: *"3 things changed since last month; 9 carried."*
+One folder per client; client A never sees client B.
+
+---
+
+## Install — any harness, one command
 
 ```bash
 git clone https://github.com/conikeec/priors
 cd priors && ./install.sh
 ```
-
-The installer detects what you have and does the right thing:
 
 | Harness | What install means |
 |---|---|
@@ -62,9 +123,9 @@ The installer detects what you have and does the right thing:
 | **Codex** | paste `adapters/AGENTS-snippet.md` into your repo's `AGENTS.md` |
 | **Hermes / anything with a shell** | `adapters/system-prompt.md` into the system prompt |
 
-The protocol and the ledger are identical everywhere — a team running
-Codex and Claude Code side by side converges against the same `.priors/`
-in the same repo. Only requirement: `node >= 18`.
+The diary format is identical everywhere, so a team running Codex and
+Claude Code side by side converges on the same `.priors/` in the same
+repo. Only requirement: `node >= 18`.
 
 Then wrap any skill you already use — no changes to that skill required:
 
@@ -73,54 +134,34 @@ Then wrap any skill you already use — no changes to that skill required:
 /with-priors clarity-fold https://your-site.com
 ```
 
-First run: works exactly like today, and quietly writes what it found to
-`.priors/` in your repo (plain text files — read them, commit them, diff
-them in PRs).
+First run works exactly like today, and quietly starts the diary.
 
-Second run: opens by checking everything from last time, then tells you the
-honest delta:
+## Three words worth knowing
 
-```
-Checked against 35 priors:
-  ✓ 22 fixed — nice work
-  → 9 carried (same items as last run, unchanged code)
-  ? 4 need your call — reply: keep / dismiss each
-New this run: 3 (all in code your fixes touched)
-```
-
-That `? need your call` moment is the whole trick: answer once, and the
-answer sticks forever — or until the code it's about changes.
+- **A prior** — anything already settled: a finding, a decision, a lesson.
+- **Carried** — still applies; shown, never re-argued as new.
+- **Your call** — the only thing that makes a prior permanent. The agent
+  suggests; only you decide. (And nothing is ever silently forgotten — a
+  prior whose code was deleted goes to rest, and wakes with its memory if
+  the code comes back.)
 
 **Prefer pictures?** The whole system in six visuals:
 **[the visual tutorial →](docs/tutorial/)**
 
-## The three words worth knowing
+## Under the hood
 
-- **A prior** — anything already settled: a finding, a decision, a lesson.
-- **Carried** — a prior that still applies; shown, never re-argued as new.
-- **Your call** — the only thing that can make a prior permanent. The agent
-  can *suggest* a finding is obsolete; only you can dismiss it for good.
-
-(And one for later: **resting** — a prior whose code was deleted goes
-quiet after a few runs, and wakes with its memory if the code ever comes
-back. Nothing is ever silently forgotten.)
-
-Everything else — dispositions, facets, scope hashes, activation phases —
-lives in [PRIORS.md](PRIORS.md), the technical spec, for skill authors and
-implementers. You never need it to use this.
-
-## Works with
-
-Claude Code (plugin/skill), OpenClaw and other Agent-Skills-compatible
-harnesses (same SKILL.md), Codex (`adapters/AGENTS-snippet.md`), or any
-agent with a shell (`adapters/system-prompt.md`). One repo, one ledger —
-different harnesses converge against the same settled state, because the
-enforcement is a script with exit codes, not a feature of any harness.
+The enforcement is a single dependency-free script
+(`skills/priors/scripts/priors.mjs`): the agent *proposes*, the script
+*disposes* — it refuses to record any run that ignored the diary, with
+exit codes, not good intentions. The full technical standard (record
+format, lifecycle, guarantees, conformance) is in [PRIORS.md](PRIORS.md)
+— for skill authors and implementers; you never need it to use this.
 
 ## Status
 
-v0.1 — spec + reference keeper + wrapper. Reference adopters:
-[clarity-journey](https://github.com/modiqo/clarity-journey) (site audits)
-and code review. Iterating in the open; the spec is the product.
+v0.2 — spec + reference keeper + wrapper + visual tutorial. Reference
+adopters: code review and
+[clarity-journey](https://github.com/modiqo/clarity-journey) (site
+audits). Iterating in the open; the spec is the product.
 
 MIT

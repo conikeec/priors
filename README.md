@@ -42,13 +42,29 @@ The result over time: re-runs get *shorter*, not longer. Eventually a run
 comes back with "everything settled still holds — nothing new," which is a
 sentence a memoryless agent cannot say.
 
-## Quickstart
+## Quickstart — any harness
+
+The core is a plain script; "installing" just means teaching your harness
+the ritual. One clone, one installer, everywhere:
 
 ```bash
 git clone https://github.com/conikeec/priors
-cp -R priors/skills/priors ~/.claude/skills/
-cp priors/commands/with-priors.md ~/.claude/commands/
+cd priors && ./install.sh
 ```
+
+The installer detects what you have and does the right thing:
+
+| Harness | What install means |
+|---|---|
+| **Claude Code** | skill `priors` + `/with-priors` command (auto-installed) |
+| **OpenClaw** | same skill, its native format (auto-installed) |
+| **Kimi CLI** / other Agent-Skills harnesses | point them at `skills/priors/` |
+| **Codex** | paste `adapters/AGENTS-snippet.md` into your repo's `AGENTS.md` |
+| **Hermes / anything with a shell** | `adapters/system-prompt.md` into the system prompt |
+
+The protocol and the ledger are identical everywhere — a team running
+Codex and Claude Code side by side converges against the same `.priors/`
+in the same repo. Only requirement: `node >= 18`.
 
 Then wrap any skill you already use — no changes to that skill required:
 
@@ -76,7 +92,7 @@ That `? need your call` moment is the whole trick: answer once, and the
 answer sticks forever — or until the code it's about changes.
 
 **Prefer pictures?** The whole system in six visuals:
-[docs/tutorial/TUTORIAL.md](docs/tutorial/TUTORIAL.md).
+**[the visual tutorial →](docs/tutorial/)**
 
 ## The three words worth knowing
 
